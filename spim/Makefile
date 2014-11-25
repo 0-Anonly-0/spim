@@ -66,10 +66,12 @@ DOC_DIR = ../Documentation
 
 
 # Full path for the directory that will hold the executable files:
-BIN_DIR = $(DESTDIR)/usr/bin
+#BIN_DIR = $(DESTDIR)/usr/bin
+BIN_DIR = .
 
 # Full path for the directory that will hold the exception handler:
-EXCEPTION_DIR = $(DESTDIR)/usr/share/spim
+#EXCEPTION_DIR = $(DESTDIR)/usr/share/spim
+EXCEPTION_DIR = .
 
 # Full path for the directory that will hold the man files:
 MAN_DIR = $(DESTDIR)/usr/share/man/man1
@@ -124,10 +126,13 @@ LEXCFLAGS += -O $(CFLAGS)
 
 
 OBJS = spim.o spim-utils.o run.o mem.o inst.o data.o sym-tbl.o parser_yacc.o lex.yy.o \
-       syscall.o display-utils.o string-stream.o
+       syscall.o display-utils.o string-stream.o statistics.o
 
 
-spim:   $(OBJS)
+spim:
+	make -f Makefile spim2
+
+spim2:   $(OBJS)
 	$(CC) -g $(OBJS) $(LDFLAGS) -o spim -lm
 
 
@@ -192,7 +197,7 @@ install-man:
 	install -m 0444 $(DOC_DIR)/spim.man $(MAN_DIR)
 
 splint: spim
-	splint -weak -preproc -warnposix +matchanyintegral spim.c parser_yacc.c lex.yy.c
+	splint -weak -preproc -warnposix +matchanyintegral spim.c statistics.c parser_yacc.c lex.yy.c
 
 
 
@@ -319,6 +324,7 @@ spim.o: $(CPU_DIR)/parser.h
 spim.o: $(CPU_DIR)/sym-tbl.h
 spim.o: $(CPU_DIR)/scanner.h
 spim.o: parser_yacc.h
+statistics.o: statistics.h
 parser_yacc.o: $(CPU_DIR)/spim.h
 parser_yacc.o: $(CPU_DIR)/string-stream.h
 parser_yacc.o: $(CPU_DIR)/spim-utils.h
