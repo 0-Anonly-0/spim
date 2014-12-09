@@ -41,6 +41,8 @@ typedef uint32 u_reg_word;
 
 extern reg_word R[R_LENGTH];
 
+extern struct mem_cache *c_dat;   //Nel
+extern struct mem_cache *c_inst;   //inst cache
 extern reg_word HI, LO;
 
 extern mem_addr PC, nPC;

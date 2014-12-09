@@ -62,6 +62,7 @@
 #include "syscall.h"
 #include "run.h"
 #include "statistics.h"                    /* Added for keepstats */
+#include "cache.h"
 
 bool force_break = false;	/* For the execution env. to force an execution break */
 
@@ -258,7 +259,33 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 #endif
 
 	  exception_occurred = 0;
-	  inst = read_mem_inst (PC);
+	  if(!cache_simulation || !inst_simulation)
+		inst = read_mem_inst (PC);
+	  else{
+		if(c_inst->miss_step==0 || c_inst->miss_step==1)   
+					c_inst->word=read_cache_inst(c_inst,c_dat->miss_step,PC);
+				if(c_inst->acces){   //hit
+					if(c_inst->word==NULL){
+						run_error ("Attempt to execute non-instruction at 0x%08x\n", PC);
+						return (0);
+						//inst=NULL;
+					}
+					else
+						inst=inst_decode(c_inst->word);
+					c_inst->miss_step=0;
+					c_inst->acces=0;
+					
+				}
+				else{   //miss
+					
+					if(c_inst->miss_step==2)
+						c_inst->acces=1;
+					continue;
+				}
+			}
+
+	  
+		  
 	  if (exception_occurred) /* In reading instruction */
 	    {
 	      exception_occurred = 0;
@@ -572,30 +599,104 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 
 	    case Y_LB_OP:
               statistics_inc_reads(&global_stats);   /* keepstats */
+	      if(!cache_simulation){   //Nel
 	      LOAD_INST (&R[RT (inst)],
 			 read_mem_byte (R[BASE (inst)] + IOFFSET (inst)),
-			 0xffffffff);
+			 0xffffffff);}
+			else{
+				if(c_dat->miss_step==0 || c_dat->miss_step==1)   //primera fase de la lectura (portar el bloc de memoria)
+					c_dat->word=read_cache_byte(c_dat,(R[BASE (inst)] + IOFFSET (inst)),1);
+				if(c_dat->acces){
+					
+					LOAD_INST (&R[RT (inst)],c_dat->word,0xffffffff);
+					c_dat->miss_step=0;
+					c_dat->acces=0;
+					
+				}
+				else{
+					
+					PC -= BYTES_PER_WORD;
+					if(c_dat->miss_step==2)
+						c_dat->acces=1;
+				}
+			}
+
 	      break;
 
 	    case Y_LBU_OP:
               statistics_inc_reads(&global_stats);   /* keepstats */
+	      if(!cache_simulation){
 	      LOAD_INST (&R[RT (inst)],
 			 read_mem_byte (R[BASE (inst)] + IOFFSET (inst)),
-			 0xff);
+			 0xff);}
+			else{
+				if(c_dat->miss_step==0 || c_dat->miss_step==1)   //primera fase de la lectura (portar el bloc de memoria)
+				c_dat->word=read_cache_byte(c_dat,(R[BASE (inst)] + IOFFSET (inst)),0);
+				if(c_dat->acces){
+					
+					LOAD_INST (&R[RT (inst)],c_dat->word,0xffffffff);
+					c_dat->miss_step=0;
+					c_dat->acces=0;
+					
+				}
+				else{
+					
+					PC -= BYTES_PER_WORD;
+					if(c_dat->miss_step==2)
+						c_dat->acces=1;
+				}
+			}
 	      break;
 
 	    case Y_LH_OP:
               statistics_inc_reads(&global_stats);   /* keepstats */
+	      if(!cache_simulation){   //Nel
 	      LOAD_INST (&R[RT (inst)],
 			 read_mem_half (R[BASE (inst)] + IOFFSET (inst)),
-			 0xffffffff);
-	      break;
+			 0xffffffff);}
+			else{
+				if(c_dat->miss_step==0 || c_dat->miss_step==1)   //primera fase de la lectura (portar el bloc de memoria)
+					c_dat->word=read_cache_half(c_dat,(R[BASE (inst)] + IOFFSET (inst)),1);
+				if(c_dat->acces){
+					
+					LOAD_INST (&R[RT (inst)],c_dat->word,0xffffffff);
+					c_dat->miss_step=0;
+					c_dat->acces=0;
+					
+				}
+				else{
+					
+					PC -= BYTES_PER_WORD;
+					if(c_dat->miss_step==2)
+						c_dat->acces=1;
+				}
+			}
+	
+		  break;
 
 	    case Y_LHU_OP:
               statistics_inc_reads(&global_stats);   /* keepstats */
+	      if(!cache_simulation){
 	      LOAD_INST (&R[RT (inst)],
 			 read_mem_half (R[BASE (inst)] + IOFFSET (inst)),
-			 0xffff);
+			 0xffff);}
+			else{
+				if(c_dat->miss_step==0 || c_dat->miss_step==1)   //primera fase de la lectura (portar el bloc de memoria)
+					c_dat->word=read_cache_half(c_dat,(R[BASE (inst)] + IOFFSET (inst)),0);
+				if(c_dat->acces){
+					
+					LOAD_INST (&R[RT (inst)],c_dat->word,0xffffffff);
+					c_dat->miss_step=0;
+					c_dat->acces=0;
+					
+				}
+				else{
+					
+					PC -= BYTES_PER_WORD;
+					if(c_dat->miss_step==2)
+						c_dat->acces=1;
+				}
+			}
 	      break;
 
 	    case Y_LL_OP:
@@ -612,10 +713,29 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 
 	    case Y_LW_OP:
               statistics_inc_reads(&global_stats);   /* keepstats */
+	      if(!cache_simulation){   //Nel
 	      LOAD_INST (&R[RT (inst)],
 			 read_mem_word (R[BASE (inst)] + IOFFSET (inst)),
 			 0xffffffff);
-	      break;
+			}
+			else{
+				if(c_dat->miss_step==0 || c_dat->miss_step==1)   
+					c_dat->word=read_cache_word(c_dat,(R[BASE (inst)] + IOFFSET (inst)));
+				if(c_dat->acces){   //hit
+					
+					LOAD_INST (&R[RT (inst)],c_dat->word,0xffffffff);
+					c_dat->miss_step=0;
+					c_dat->acces=0;
+					
+				}
+				else{   //miss
+					
+					PC -= BYTES_PER_WORD;
+					if(c_dat->miss_step==2)
+						c_dat->acces=1;
+				}
+			}
+		  break;
 
 	    case Y_LDC2_OP:
 	      RAISE_EXCEPTION (ExcCode_CpU, {}); /* No Coprocessor 2 */
@@ -883,7 +1003,26 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 	      break;
 
 	    case Y_SB_OP:
-	      set_mem_byte (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+	      if(!cache_simulation)   //Nel
+			set_mem_byte (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+		  else{
+			  if(c_dat->miss_step==0 || c_dat->miss_step==1){
+				write_cache_byte(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				if(!c_dat->acces){
+				  PC -= BYTES_PER_WORD;
+				  if(c_dat->miss_step==2)
+					  c_dat->acces=1;
+				  
+				}
+				else c_dat->acces=0;
+			  }
+			  else{
+				  write_byte_postmiss(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				  c_dat->miss_step=0;
+				  c_dat->acces=0;
+			  }
+		  }
+
 	      break;
 
 	    case Y_SC_OP:
@@ -896,7 +1035,26 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 	      break;
 
 	    case Y_SH_OP:
-	      set_mem_half (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+	      if(!cache_simulation)   //Nel
+			set_mem_half (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+		  else{
+			  if(c_dat->miss_step==0 || c_dat->miss_step==1){
+				write_cache_half(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				if(!c_dat->acces){
+				  PC -= BYTES_PER_WORD;
+				  if(c_dat->miss_step==2)
+					  c_dat->acces=1;
+				  
+				}
+				else c_dat->acces=0;
+			  }
+			  else{
+				  write_half_postmiss(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				  c_dat->miss_step=0;
+				  c_dat->acces=0;
+			  }
+		  }
+
 	      break;
 
 	    case Y_SLL_OP:
@@ -1018,8 +1176,29 @@ run_spim (mem_addr initial_PC, int steps_to_run, bool display)
 	      break;
 
 	    case Y_SW_OP:
-              statistics_inc_writes(&global_stats);   /* keepstats */
-	      set_mem_word (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+	      
+		  if(!cache_simulation)  //Nel
+			set_mem_word (R[BASE (inst)] + IOFFSET (inst), R[RT (inst)]);
+		  
+		  else{
+			  if(c_dat->miss_step==0 || c_dat->miss_step==1){
+				write_cache_word(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				if(!c_dat->acces){
+				  PC -= BYTES_PER_WORD;
+				  if(c_dat->miss_step==2)
+					  c_dat->acces=1;
+				  
+				}
+				else c_dat->acces=0;
+			  }
+			  else{
+				  write_word_postmiss(c_dat,R[BASE (inst)] + IOFFSET (inst),R[RT (inst)]);
+				  c_dat->miss_step=0;
+				  c_dat->acces=0;
+			  }
+		  }
+			  
+
 	      break;
 
 	    case Y_SWC2_OP:

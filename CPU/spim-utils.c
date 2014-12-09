@@ -50,6 +50,7 @@
 #include "run.h"
 #include "sym-tbl.h"
 #include "statistics.h"                    /* Added for keepstats */
+#include "cache.h"
 
 
 /* Internal functions: */
@@ -77,7 +78,8 @@ int initial_k_data_size = K_DATA_SIZE;
 
 mem_addr initial_k_data_limit = K_DATA_LIMIT;
 
-
+cache *c_dat=0; //Nel   La cache 
+cache *c_inst;   //inst cache
 
 /* Initialize or reinitialize the state of the machine. */
 
@@ -101,6 +103,13 @@ initialize_world (char* exception_file_names)
   data_begins_at_point (DATA_BOT);
   text_begins_at_point (TEXT_BOT);
 
+  if(cache_simulation){ //Nel
+	if(data_simulation)
+	c_dat=initialize_cache(c_dat,cache_bytesize,cache_block_bytesize,cache_ways,cache_algorithm,0);
+	if(inst_simulation)
+	c_inst=initialize_cache(c_inst,cache_instbytesize,cache_instblock_bytesize,cache_instways,cache_instalgorithm,1);   //inst cache
+  }
+  
   if (exception_file_names != NULL)
     {
       bool old_bare = bare_machine;

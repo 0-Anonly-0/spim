@@ -855,6 +855,161 @@ format_an_inst (str_stream *ss, instruction *inst, mem_addr addr)
 
 
 
+//Nel inst_cache to formt instructions for the listctrl 
+void format_cache_instruction(int instruc,char *sst){
+  name_val_val *entry;
+  //str_stream *sst;
+  
+  //int line_start = ss_length (sst);
+  instruction *inst=inst_decode(instruc);
+ 
+  
+  /*if (inst == NULL)
+    {
+      ss_printf (ss, "<none>");
+      return ss_to_string(ss);
+	  
+    }*/
+
+  entry = map_int_to_name_val_val (name_tbl,
+				   sizeof (name_tbl) / sizeof (name_val_val),
+				   OPCODE (inst));
+  /*if (entry == NULL)
+    {
+      ss_printf (ss, "<unknown instruction %d>", OPCODE (inst));
+      return ss_to_string(ss);
+	  
+    }*/
+
+  //ss_printf (sst, "%s",entry->name);
+  switch (entry->value2)
+    {
+    case BC_TYPE_INST:
+      sprintf (sst, "%s %d %d",entry->name, CC (inst), IDISP (inst));
+      break;
+
+    case B1_TYPE_INST:
+      sprintf (sst, "%s $%d %d",entry->name, RS (inst), IDISP (inst));
+      break;
+
+    case I1s_TYPE_INST:
+      sprintf (sst, "%s $%d, %d",entry->name, RS (inst), IMM (inst));
+      break;
+
+    case I1t_TYPE_INST:
+      sprintf (sst, "%s $%d, %d",entry->name, RT (inst), IMM (inst));
+      break;
+
+    case I2_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d, %d",entry->name, RT (inst), RS (inst), IMM (inst));
+      break;
+
+    case B2_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d, %d",entry->name, RS (inst), RT (inst), IDISP (inst));
+      break;
+
+    case I2a_TYPE_INST:
+      sprintf (sst, "%s $%d, %d($%d)",entry->name, RT (inst), IMM (inst), BASE (inst));
+      break;
+
+    case R1s_TYPE_INST:
+      sprintf (sst, "%s $%d",entry->name, RS (inst));
+      break;
+
+    case R1d_TYPE_INST:
+      sprintf (sst, "%s $%d",entry->name, RD (inst));
+      break;
+
+    case R2td_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d",entry->name, RT (inst), RD (inst));
+      break;
+
+    case R2st_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d",entry->name, RS (inst), RT (inst));
+      break;
+
+    case R2ds_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d",entry->name, RD (inst), RS (inst));
+      break;
+
+    case R2sh_TYPE_INST:
+      if (ENCODING (inst) == 0)
+	{
+	  //ss_erase (sst, 3);	/* zap sll */
+	  sprintf (sst, "nop");
+	}
+      else
+	sprintf (sst, "%s $%d, $%d, %d",entry->name, RD (inst), RT (inst), SHAMT (inst));
+      break;
+
+    case R3_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d, $%d",entry->name, RD (inst), RS (inst), RT (inst));
+      break;
+
+    case R3sh_TYPE_INST:
+      sprintf (sst, "%s $%d, $%d, $%d",entry->name, RD (inst), RT (inst), RS (inst));
+      break;
+
+    case FP_I2a_TYPE_INST:
+      sprintf (sst, "%s $f%d, %d($%d)",entry->name, FT (inst), IMM (inst), BASE (inst));
+      break;
+
+    case FP_R2ds_TYPE_INST:
+      sprintf (sst, "%s $f%d, $f%d",entry->name, FD (inst), FS (inst));
+      break;
+
+    case FP_R2ts_TYPE_INST:
+      sprintf (sst, "%s $%d, $f%d",entry->name, RT (inst), FS (inst));
+      break;
+
+    case FP_CMP_TYPE_INST:
+      sprintf (sst, "%s $f%d, $f%d",entry->name, FS (inst), FT (inst));
+      break;
+
+    case FP_R3_TYPE_INST:
+      sprintf (sst, "%s $f%d, $f%d, $f%d",entry->name, FD (inst), FS (inst), FT (inst));
+      break;
+
+    case FP_MOVC_TYPE_INST:
+      if (OPCODE (inst) == Y_MOVF_OP)
+	sprintf (sst, "%s $%d, $%d, %d",entry->name, FD (inst), FS (inst), CC (inst));
+      else
+	sprintf (sst, "%s $f%d, $f%d, %d",entry->name, FD (inst), FS (inst), CC (inst));
+      break;
+
+    case J_TYPE_INST:
+      sprintf (sst, "%s 0x%08x",entry->name, TARGET (inst) << 2);
+      break;
+
+    case NOARG_TYPE_INST:
+      break;
+
+    default:
+      fatal_error ("Unknown instruction type in print_inst\n");
+    }
+
+  /*if (EXPR (inst) != NULL && EXPR (inst)->symbol != NULL)
+    {
+      ss_printf (ss, " [");
+      if (opcode_is_load_store (OPCODE (inst)))
+	format_imm_expr (ss, EXPR (inst), BASE (inst));
+      else
+	format_imm_expr (ss, EXPR (inst), -1);
+      ss_printf (ss, "]");
+    }*/
+
+  
+  //valor= ss_to_string(sst);
+  //return sst;
+}
+
+
+
+
+
+
+
+
 /* Return true if SPIM OPCODE (e.g. Y_...) represents a conditional
    branch. */
 

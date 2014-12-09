@@ -271,3 +271,5 @@ void text_begins_at_point (mem_addr addr);
 imm_expr *upper_bits_of_expr (imm_expr *old_expr);
 void user_kernel_text_segment (bool to_kernel);
 bool is_zero_imm (imm_expr *expr);
+
+void format_cache_instruction(int instruc,char *sst); //Nel to update the cacheInstListCtrl
